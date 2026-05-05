@@ -5,6 +5,33 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this package adheres to [SemVer](https://semver.org/spec/v2.0.0.html)
 once it reaches `1.0.0`. Pre-1.0 minor versions may include breaking changes.
 
+## [0.2.1] — 2026-05-05
+
+### Fixed
+
+- **`amount` is now float dollars, not integer cents.** The v0.2.0 assumption
+  that the API uses cents was wrong — the Scan & Pay API accepts and returns
+  `amount` as a float dollar value (e.g. `19.90` for $19.90). The `assertCents`
+  validator and the `Cents` / `cents()` helpers have been removed. Pass the
+  dollar amount directly: `amount: 19.90`.
+- `PaymentSession.amount` and `WebhookEvent.amount` are now documented as
+  float dollars.
+- Per-session ceiling corrected from 100,000,000 cents to $1,000,000.
+
+### Migration from v0.2.0
+
+```diff
+- await client.createSession({ amount: 1990, ... })
++ await client.createSession({ amount: 19.90, ... })
+
+- import { cents } from '@scanandpay/node';
+- amount: cents(1990)
++ amount: 19.90
+```
+
+If you were using `$session->amount / 100` for display, remove the division —
+the value is already in dollars.
+
 ## [0.2.0] — 2026-05-04
 
 ### Breaking

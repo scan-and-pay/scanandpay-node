@@ -1,15 +1,14 @@
-import type { Cents } from './cents';
 import type { RetryOptions } from './transport';
 
 /**
  * Payment session creation request.
  *
- * `amount` is integer cents. The SDK rejects floats and non-positive values
- * at runtime — see {@link cents} for an opt-in branded type that surfaces
- * money mistakes at compile time.
+ * `amount` is a positive float in dollars (e.g. `19.90` for $19.90).
+ * Zero, negative, non-finite, and values above $1,000,000 are rejected
+ * with `ValidationError` before any network call.
  */
 export interface CreateSessionRequest {
-  amount: number | Cents;
+  amount: number;
   platformOrderId: string;
   payId: string;
   merchantName: string;
@@ -32,7 +31,7 @@ export interface PaymentSession {
   payUrl: string;
   qrUrl: string;
   payId: string;
-  /** Integer cents. */
+  /** Float dollars, e.g. 19.90. */
   amount: number;
   currency: string;
   reference: string;
@@ -48,7 +47,7 @@ export interface WebhookEvent {
   order_id: string;
   payment_session_id: string;
   status: 'confirmed' | 'failed' | 'expired';
-  /** Integer cents. */
+  /** Float dollars, e.g. 19.90. */
   amount: number;
   currency: string;
   tx_id: string;

@@ -59,7 +59,6 @@ export class ScanAndPay {
   }
 }
 
-export * from './cents';
 export * from './errors';
 export * from './idempotency';
 export * from './types';

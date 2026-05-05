@@ -4,7 +4,7 @@ import { ValidationError } from '../src/errors';
 
 const resource = new SessionResource('merchant_test', 'https://api.example.com', 'sp_api_test');
 const validParams = {
-  amount: 1000,
+  amount: 19.90,
   platformOrderId: 'o1',
   payId: 'm@x.com',
   merchantName: 'X',
@@ -16,10 +16,13 @@ afterEach(() => {
 });
 
 describe('SessionResource.create — validation (no network)', () => {
-  it('rejects float amount', async () => {
+  it('accepts a float dollar amount', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ sessionId: 'SP_SESS_xyz' }), { status: 200 })
+    ) as never;
     await expect(
-      resource.create({ ...validParams, amount: 19.9 })
-    ).rejects.toBeInstanceOf(ValidationError);
+      resource.create({ ...validParams, amount: 19.90 })
+    ).resolves.toBeDefined();
   });
 
   it('rejects zero amount', async () => {
@@ -32,6 +35,12 @@ describe('SessionResource.create — validation (no network)', () => {
     await expect(
       resource.create({ ...validParams, amount: -5 })
     ).rejects.toThrow(/greater than 0/);
+  });
+
+  it('rejects amount above $1,000,000', async () => {
+    await expect(
+      resource.create({ ...validParams, amount: 1_000_000.01 })
+    ).rejects.toThrow(/per-session limit/);
   });
 
   it('rejects non-AUD currency', async () => {

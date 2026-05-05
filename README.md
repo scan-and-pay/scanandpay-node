@@ -15,7 +15,7 @@ yarn add @scanandpay/node
 ## Quickstart (Node.js)
 
 ```typescript
-import { ScanAndPay, cents } from '@scanandpay/node';
+import { ScanAndPay } from '@scanandpay/node';
 
 const client = new ScanAndPay(
   process.env.SCANANDPAY_MERCHANT_ID!,
@@ -23,9 +23,9 @@ const client = new ScanAndPay(
   process.env.SCANANDPAY_WEBHOOK_SECRET, // optional
 );
 
-// 1. Create a session at checkout. Amount is integer cents.
+// 1. Create a session at checkout. Amount is float dollars.
 const session = await client.createSession({
-  amount: cents(1990),                       // $19.90 — floats rejected
+  amount: 19.90,                             // $19.90
   platformOrderId: 'order_456',
   payId: 'merchant@example.com.au',
   merchantName: 'Acme Coffee',
@@ -53,18 +53,21 @@ app.post('/webhooks/scanandpay', async (req, res) => {
 });
 ```
 
-## Money is always integer cents
+## Amount format
 
-The SDK rejects float amounts at the constructor — call `Math.round(value * 100)`
-or use the `cents()` helper to get a branded `Cents` type that surfaces
-mistakes at compile time.
+`amount` is always **float dollars** (e.g. `19.90` for $19.90). This matches
+the Scan & Pay API directly — no multiplication needed.
 
 ```ts
-import { cents } from '@scanandpay/node';
-
-cents(1990);     // ✓ ok — $19.90
-cents(19.90);    // ✗ ValidationError — "did you mean 20?"
+amount: 19.90    // ✓ $19.90
+amount: 0.50     // ✓ $0.50
+amount: 1000     // ✓ $1,000.00
+amount: -1       // ✗ ValidationError — must be greater than 0
+amount: 0        // ✗ ValidationError — must be greater than 0
 ```
+
+The SDK validates that `amount` is a positive finite number not exceeding
+$1,000,000 and throws `ValidationError` before any network call.
 
 ## Idempotency
 
@@ -74,7 +77,7 @@ process restarts.
 
 ```ts
 await client.createSession({
-  amount: cents(1990),
+  amount: 19.90,
   platformOrderId: 'order_456',
   payId: 'merchant@example.com.au',
   merchantName: 'Acme Coffee',
@@ -89,7 +92,7 @@ exponential backoff (250ms / 500ms / 1000ms). Tune per request:
 
 ```ts
 await client.createSession({
-  amount: cents(1990),
+  amount: 19.90,
   platformOrderId: 'order_456',
   payId: 'merchant@example.com.au',
   merchantName: 'Acme Coffee',

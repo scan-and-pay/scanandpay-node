@@ -1,4 +1,4 @@
-import { assertCents } from '../cents';
+import { assertAmount } from '../cents';
 import { ValidationError } from '../errors';
 import { uuidv7 } from '../idempotency';
 import { decodeJsonOrThrow, requestWithRetry, RetryOptions } from '../transport';
@@ -25,8 +25,9 @@ export class SessionResource {
   /**
    * Creates a new payment session.
    *
-   * `amount` must be a positive integer in cents. Callers supplying a float
-   * (or zero, or negative) get a `ValidationError` *before* any network call.
+   * `amount` must be a positive float in dollars (e.g. `19.90`). Zero,
+   * negative, non-finite, and values above $1,000,000 get a `ValidationError`
+   * before any network call.
    *
    * If `idempotencyKey` is omitted, the SDK generates a UUIDv7 so that
    * naive retry loops never create duplicate sessions.
@@ -44,7 +45,7 @@ export class SessionResource {
       retry,
     } = params;
 
-    assertCents(amount);
+    assertAmount(amount);
 
     if (currency !== 'AUD') {
       throw new ValidationError('Only AUD is supported');
