@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { PaymentSession } from '../types';
 import { usePaymentStatus } from './index';
 
-export interface ScanAndPayCheckoutProps {
+export interface CheckoutWidgetProps {
   session: PaymentSession;
   pollUrl: string;
   onSuccess?: (sessionId: string) => void;
@@ -10,7 +10,7 @@ export interface ScanAndPayCheckoutProps {
   theme?: 'light' | 'dark';
 }
 
-export const ScanAndPayCheckout: React.FC<ScanAndPayCheckoutProps> = ({
+export const CheckoutWidget: React.FC<CheckoutWidgetProps> = ({
   session,
   pollUrl,
   onSuccess,

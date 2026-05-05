@@ -5,6 +5,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this package adheres to [SemVer](https://semver.org/spec/v2.0.0.html)
 once it reaches `1.0.0`. Pre-1.0 minor versions may include breaking changes.
 
+## [0.2.2] — 2026-05-05
+
+### Fixed
+
+- **`CheckoutWidget` is now the canonical export name** from `@scanandpay/node/react`.
+  Previously exported as `ScanAndPayCheckout` (mismatched the file name and the README).
+  `import { CheckoutWidget } from '@scanandpay/node/react'` now works correctly.
+  `CheckoutWidgetProps` replaces `ScanAndPayCheckoutProps`.
+
 ## [0.2.1] — 2026-05-05
 
 ### Fixed
