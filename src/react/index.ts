@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export * from './ScanAndPayCheckout';
+export * from './CheckoutWidget';
 
 export function usePaymentStatus(sessionId: string | null, pollUrl: string) {
   const [status, setStatus] = useState<string>('WAITING');
