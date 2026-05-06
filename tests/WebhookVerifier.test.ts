@@ -14,7 +14,7 @@ function canonicalBody(nonce = 'unique_nonce_1'): string {
     order_id: 'order_456',
     payment_session_id: 'SP_SESS_abc123',
     status: 'confirmed',
-    amount: 1990,
+    amount: 19.90,
     currency: 'AUD',
     tx_id: 'bank_ref_789',
     timestamp: Math.floor(Date.now() / 1000),
@@ -34,7 +34,7 @@ describe('WebhookVerifier', () => {
 
     expect(event.order_id).toBe('order_456');
     expect(event.status).toBe('confirmed');
-    expect(event.amount).toBe(1990);
+    expect(event.amount).toBe(19.90);
   });
 
   it('rejects tampered body', () => {

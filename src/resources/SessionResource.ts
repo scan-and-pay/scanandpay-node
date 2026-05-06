@@ -77,7 +77,7 @@ export class SessionResource {
         body: JSON.stringify({
           merchantId: this.merchantId,
           platformOrderId,
-          amount,
+          amount: Math.round(amount * 100) / 100,
           currency,
           payId,
           merchantName,

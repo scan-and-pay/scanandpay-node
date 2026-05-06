@@ -1,6 +1,6 @@
 {
   "name": "@scanandpay/node",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Official Scan & Pay Node.js SDK — accept PayTo PayID payments via QR.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
