@@ -121,3 +121,99 @@ describe('SessionResource.retrieve', () => {
     await expect(resource.retrieve('not_valid')).rejects.toBeInstanceOf(ValidationError);
   });
 });
+
+describe('SessionResource — version + SDK headers', () => {
+  it('sends Scanpay-Version + X-Scanpay-Sdk on create', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ sessionId: 'SP_SESS_xyz' }), { status: 200 })
+    );
+    globalThis.fetch = fetchMock as never;
+
+    await resource.create(validParams);
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    const headers = init.headers as Record<string, string>;
+    expect(headers['Scanpay-Version']).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(headers['X-Scanpay-Sdk']).toMatch(/^scanandpay-node\/\d+\.\d+\.\d+$/);
+  });
+
+  it('sends Scanpay-Version + X-Scanpay-Sdk on retrieve', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ sessionId: 'SP_SESS_xyz' }), { status: 200 })
+    );
+    globalThis.fetch = fetchMock as never;
+
+    await resource.retrieve('SP_SESS_abc');
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    const headers = init.headers as Record<string, string>;
+    expect(headers['Scanpay-Version']).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(headers['X-Scanpay-Sdk']).toMatch(/^scanandpay-node\/\d+\.\d+\.\d+$/);
+  });
+});
+
+describe('SessionResource.create — metadata', () => {
+  it('omits metadata key from body when not provided', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ sessionId: 'SP_SESS_xyz' }), { status: 200 })
+    );
+    globalThis.fetch = fetchMock as never;
+
+    await resource.create(validParams);
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    const body = JSON.parse(init.body as string);
+    expect('metadata' in body).toBe(false);
+  });
+
+  it('forwards metadata in the request body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ sessionId: 'SP_SESS_xyz' }), { status: 200 })
+    );
+    globalThis.fetch = fetchMock as never;
+
+    await resource.create({
+      ...validParams,
+      metadata: { customer_id: 'cus_42', cart: 'cart_99' },
+    });
+
+    const init = fetchMock.mock.calls[0][1] as RequestInit;
+    const body = JSON.parse(init.body as string);
+    expect(body.metadata).toEqual({ customer_id: 'cus_42', cart: 'cart_99' });
+  });
+
+  it('rejects metadata with more than 50 keys', async () => {
+    const big: Record<string, string> = {};
+    for (let i = 0; i < 51; i++) big[`k${i}`] = 'v';
+    await expect(
+      resource.create({ ...validParams, metadata: big })
+    ).rejects.toThrow(/50 keys/);
+  });
+
+  it('rejects metadata value longer than 500 chars', async () => {
+    await expect(
+      resource.create({
+        ...validParams,
+        metadata: { note: 'x'.repeat(501) },
+      })
+    ).rejects.toThrow(/500 chars/);
+  });
+
+  it('rejects metadata key longer than 500 chars', async () => {
+    await expect(
+      resource.create({
+        ...validParams,
+        metadata: { ['k'.repeat(501)]: 'v' },
+      })
+    ).rejects.toThrow(/500 chars/);
+  });
+
+  it('rejects non-string metadata value', async () => {
+    await expect(
+      resource.create({
+        ...validParams,
+        metadata: { count: 42 as unknown as string },
+      })
+    ).rejects.toThrow(/must be a string/);
+  });
+});

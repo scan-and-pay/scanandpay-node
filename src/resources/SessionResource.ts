@@ -1,8 +1,9 @@
 import { assertAmount } from '../cents';
+import { API_VERSION, SDK_USER_AGENT } from '../constants';
 import { ValidationError } from '../errors';
 import { uuidv7 } from '../idempotency';
 import { decodeJsonOrThrow, requestWithRetry, RetryOptions } from '../transport';
-import { CreateSessionRequest, PaymentSession } from '../types';
+import { CreateSessionRequest, Metadata, PaymentSession } from '../types';
 
 const VALID_SOURCES = new Set([
   'api',
@@ -13,6 +14,39 @@ const VALID_SOURCES = new Set([
   'wordpress',
   'shop-app',
 ]);
+
+const METADATA_MAX_KEYS = 50;
+const METADATA_MAX_CHARS = 500;
+
+function assertMetadata(metadata: Metadata): void {
+  const keys = Object.keys(metadata);
+  if (keys.length > METADATA_MAX_KEYS) {
+    throw new ValidationError(
+      `metadata may not exceed ${METADATA_MAX_KEYS} keys (got ${keys.length})`
+    );
+  }
+  for (const key of keys) {
+    const value = metadata[key];
+    if (typeof key !== 'string' || key.length === 0) {
+      throw new ValidationError('metadata keys must be non-empty strings');
+    }
+    if (typeof value !== 'string') {
+      throw new ValidationError(
+        `metadata value for "${key}" must be a string (got ${typeof value})`
+      );
+    }
+    if (key.length > METADATA_MAX_CHARS) {
+      throw new ValidationError(
+        `metadata key exceeds ${METADATA_MAX_CHARS} chars`
+      );
+    }
+    if (value.length > METADATA_MAX_CHARS) {
+      throw new ValidationError(
+        `metadata value for "${key}" exceeds ${METADATA_MAX_CHARS} chars`
+      );
+    }
+  }
+}
 
 export class SessionResource {
   constructor(
@@ -42,6 +76,7 @@ export class SessionResource {
       reference,
       source = 'api',
       idempotencyKey,
+      metadata,
       retry,
     } = params;
 
@@ -62,6 +97,9 @@ export class SessionResource {
     if (!VALID_SOURCES.has(source)) {
       throw new ValidationError(`Invalid source: ${source}`);
     }
+    if (metadata !== undefined) {
+      assertMetadata(metadata);
+    }
 
     const key = idempotencyKey ?? uuidv7();
 
@@ -73,6 +111,8 @@ export class SessionResource {
           'Content-Type': 'application/json',
           'X-Scanpay-Key': this.apiSecret,
           'Idempotency-Key': key,
+          'Scanpay-Version': API_VERSION,
+          'X-Scanpay-Sdk': SDK_USER_AGENT,
         },
         body: JSON.stringify({
           merchantId: this.merchantId,
@@ -83,6 +123,7 @@ export class SessionResource {
           merchantName,
           source,
           ...(reference !== undefined ? { reference } : {}),
+          ...(metadata !== undefined ? { metadata } : {}),
           idempotencyKey: key,
         }),
       },
@@ -106,7 +147,11 @@ export class SessionResource {
       `${this.baseUrl}/getPaymentStatus?${params}`,
       {
         method: 'GET',
-        headers: { 'X-Scanpay-Key': this.apiSecret },
+        headers: {
+          'X-Scanpay-Key': this.apiSecret,
+          'Scanpay-Version': API_VERSION,
+          'X-Scanpay-Sdk': SDK_USER_AGENT,
+        },
       },
       retry ?? this.defaultRetry
     );

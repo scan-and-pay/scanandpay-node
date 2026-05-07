@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import crypto from 'node:crypto';
 import { WebhookVerifier } from '../src/webhook';
 import { WebhookSignatureError } from '../src/errors';
@@ -65,14 +65,23 @@ describe('WebhookVerifier', () => {
   });
 
   it('rejects stale timestamp', () => {
-    const verifier = new WebhookVerifier(SECRET);
-    const body = JSON.stringify({
-      order_id: 'o', payment_session_id: 's', status: 'confirmed',
-      amount: 1, currency: 'AUD', tx_id: 't',
-      timestamp: Math.floor(Date.now() / 1000) - 120,
-      nonce: 'stale',
-    });
-    expect(() => verifier.verify(sign(body), body)).toThrow(/Timestamp skew/);
+    // Freeze system time so the 120s skew check is deterministic and not
+    // sensitive to CI jitter between body construction and verifier.verify().
+    vi.useFakeTimers();
+    try {
+      const now = new Date('2026-05-06T00:00:00Z');
+      vi.setSystemTime(now);
+      const verifier = new WebhookVerifier(SECRET);
+      const body = JSON.stringify({
+        order_id: 'o', payment_session_id: 's', status: 'confirmed',
+        amount: 1, currency: 'AUD', tx_id: 't',
+        timestamp: Math.floor(now.getTime() / 1000) - 120,
+        nonce: 'stale',
+      });
+      expect(() => verifier.verify(sign(body), body)).toThrow(/Timestamp skew/);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('rejects replayed nonce', () => {
@@ -92,5 +101,29 @@ describe('WebhookVerifier', () => {
     verifier.verify(sign(body1), body1);
     const event = verifier.verify(sign(body2), body2);
     expect(event.nonce).toBe('nonce_b');
+  });
+
+  it('exposes metadata when present in payload', () => {
+    const verifier = new WebhookVerifier(SECRET);
+    const body = JSON.stringify({
+      order_id: 'order_456',
+      payment_session_id: 'SP_SESS_abc123',
+      status: 'confirmed',
+      amount: 19.90,
+      currency: 'AUD',
+      tx_id: 'bank_ref_789',
+      timestamp: Math.floor(Date.now() / 1000),
+      nonce: 'meta_nonce',
+      metadata: { customer_id: 'cus_42', cart: 'cart_99' },
+    });
+    const event = verifier.verify(sign(body), body);
+    expect(event.metadata).toEqual({ customer_id: 'cus_42', cart: 'cart_99' });
+  });
+
+  it('returns undefined metadata when payload omits it', () => {
+    const verifier = new WebhookVerifier(SECRET);
+    const body = canonicalBody('no_meta_nonce');
+    const event = verifier.verify(sign(body), body);
+    expect(event.metadata).toBeUndefined();
   });
 });

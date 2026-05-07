@@ -5,6 +5,28 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this package adheres to [SemVer](https://semver.org/spec/v2.0.0.html)
 once it reaches `1.0.0`. Pre-1.0 minor versions may include breaking changes.
 
+## [0.3.0] — 2026-05-07
+
+### Added
+
+- **`metadata` field on `createSession`.** Free-form key/value bag (max
+  50 keys, 500 chars each) echoed back unchanged in the webhook event
+  payload + `getStatus` response. Use for correlation IDs, customer
+  references, A/B-test buckets, etc.
+- **API versioning header (`Scanpay-Version: 2026-05-07`).** Outbound
+  on every request — pins the SDK to a date-stamped API contract so
+  future wire-format changes don't break already-installed SDKs.
+- **SDK identification header (`X-Scanpay-Sdk: scanandpay-node/0.3.0`).**
+  Sent on every request for support correlation.
+- New exports: `API_VERSION`, `SDK_VERSION`, `SDK_USER_AGENT`,
+  `Metadata` type.
+- `WebhookEvent` + `PaymentSession` types now include optional
+  `metadata` field.
+
+### Documentation
+
+- README: new **Metadata** + **API versioning** sections.
+
 ## [0.2.3] — 2026-05-06
 
 ### Documentation

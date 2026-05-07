@@ -8,7 +8,14 @@ export interface CheckoutWidgetProps {
   onSuccess?: (sessionId: string) => void;
   onExpired?: () => void;
   theme?: 'light' | 'dark';
+  /** Override wordmark URLs (e.g. self-hosted under strict CSP). Defaults
+   *  to Scan & Pay-hosted assets — see docs/design/qr-card-spec.md. */
+  paytoWordmarkUrl?: string;
+  payidWordmarkUrl?: string;
 }
+
+const DEFAULT_PAYTO_WORDMARK = 'https://shop.scanandpay.com.au/PayTo_wordmark-Black-WEB.png';
+const DEFAULT_PAYID_WORDMARK = 'https://shop.scanandpay.com.au/PayID_wordmark-Black.png';
 
 export const CheckoutWidget: React.FC<CheckoutWidgetProps> = ({
   session,
@@ -16,6 +23,8 @@ export const CheckoutWidget: React.FC<CheckoutWidgetProps> = ({
   onSuccess,
   onExpired,
   theme = 'light',
+  paytoWordmarkUrl = DEFAULT_PAYTO_WORDMARK,
+  payidWordmarkUrl = DEFAULT_PAYID_WORDMARK,
 }) => {
   const { status, isPaid, isTerminal } = usePaymentStatus(session.sessionId, pollUrl);
   
@@ -51,8 +60,13 @@ export const CheckoutWidget: React.FC<CheckoutWidgetProps> = ({
         <div style={{ fontWeight: 600, fontSize: '18px' }}>{session.merchantName || 'Scan & Pay'}</div>
       </div>
 
-      <div style={{ background: '#fff', padding: '15px', borderRadius: '12px', display: 'inline-block', marginBottom: '20px', border: '1px solid #eee' }}>
-        <img src={session.qrUrl} alt="Scan to pay" style={{ display: 'block', width: '220px', height: '220px' }} />
+      <div style={{ background: '#fff', padding: '15px', borderRadius: '12px', display: 'inline-flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginBottom: '20px', border: '1px solid #eee' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
+          <img src={paytoWordmarkUrl} alt="PayTo" style={{ height: '22px', width: 'auto', display: 'block' }} loading="eager" decoding="sync" />
+          <span aria-hidden="true" style={{ height: '18px', width: '1px', background: '#d1d5db' }} />
+          <img src={payidWordmarkUrl} alt="PayID" style={{ height: '22px', width: 'auto', display: 'block' }} loading="eager" decoding="sync" />
+        </div>
+        <img src={session.qrUrl} alt="QR code — scan with your banking app to pay via PayTo PayID" style={{ display: 'block', width: '220px', height: '220px' }} />
       </div>
 
       <div style={{ marginBottom: '25px' }}>

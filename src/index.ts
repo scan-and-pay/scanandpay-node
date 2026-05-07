@@ -62,5 +62,6 @@ export class ScanAndPay {
 export * from './errors';
 export * from './idempotency';
 export * from './types';
+export { API_VERSION, SDK_VERSION, SDK_USER_AGENT } from './constants';
 export { WebhookVerifier } from './webhook';
 export type { RetryOptions } from './transport';
