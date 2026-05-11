@@ -186,7 +186,7 @@ All thrown errors extend `ScanAndPayError`:
 ## Credentials
 
 Sign in to the merchant dashboard at
-[merchant.scanandpay.com.au](https://merchant.scanandpay.com.au), open
+[business.scanandpay.com.au](https://business.scanandpay.com.au), open
 **Settings → Integrations**, and copy:
 
 - `Merchant ID`

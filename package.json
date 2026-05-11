@@ -1,6 +1,6 @@
 {
   "name": "@scanandpay/node",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Official Scan & Pay Node.js SDK — generate PayTo PayID QR codes and verify our payment confirmation webhook.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
