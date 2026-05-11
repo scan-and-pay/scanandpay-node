@@ -10,6 +10,6 @@
  * `SDK_VERSION` mirrors `package.json` and is sent as `X-Scanpay-Sdk`
  * (e.g. `scanandpay-node/0.3.0`) for support correlation.
  */
-export const API_VERSION = '2026-05-07';
-export const SDK_VERSION = '0.3.1';
+export const API_VERSION = '2026-05-11';
+export const SDK_VERSION = '0.4.0';
 export const SDK_USER_AGENT = `scanandpay-node/${SDK_VERSION}`;

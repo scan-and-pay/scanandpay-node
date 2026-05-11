@@ -1,19 +1,19 @@
 import { ValidationError } from './errors';
+import { RefundResource } from './resources/RefundResource';
 import { SessionResource } from './resources/SessionResource';
 import { RetryOptions } from './transport';
-import { CreateSessionRequest, PaymentSession } from './types';
+import { CreateRefundRequest, CreateSessionRequest, PaymentSession, Refund } from './types';
 import { WebhookVerifier } from './webhook';
 
 export interface ScanAndPayOptions {
-  /** Override the API base URL. Defaults to https://api.scanandpay.com.au. */
   baseUrl?: string;
-  /** Default retry policy applied to every request unless overridden per-call. */
   retry?: RetryOptions;
 }
 
 export class ScanAndPay {
   public static readonly DEFAULT_BASE_URL = 'https://api.scanandpay.com.au';
   public readonly sessions: SessionResource;
+  public readonly refunds: RefundResource;
   private _webhooks?: WebhookVerifier;
   private readonly baseUrl: string;
 
@@ -28,6 +28,7 @@ export class ScanAndPay {
 
     this.baseUrl = options.baseUrl ?? ScanAndPay.DEFAULT_BASE_URL;
     this.sessions = new SessionResource(this.merchantId, this.baseUrl, this.apiSecret, options.retry);
+    this.refunds = new RefundResource(this.merchantId, this.baseUrl, this.apiSecret, options.retry);
   }
 
   get webhooks(): WebhookVerifier {
@@ -46,6 +47,10 @@ export class ScanAndPay {
 
   async getStatus(sessionId: string): Promise<PaymentSession> {
     return this.sessions.retrieve(sessionId);
+  }
+
+  async createRefund(params: CreateRefundRequest): Promise<Refund> {
+    return this.refunds.create(params);
   }
 
   async ping(): Promise<boolean> {

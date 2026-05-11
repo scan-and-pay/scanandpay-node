@@ -1,9 +1,10 @@
-import { assertAmount } from '../cents';
 import { API_VERSION, SDK_USER_AGENT } from '../constants';
 import { ValidationError } from '../errors';
 import { uuidv7 } from '../idempotency';
 import { decodeJsonOrThrow, requestWithRetry, RetryOptions } from '../transport';
 import { CreateSessionRequest, Metadata, PaymentSession } from '../types';
+
+const MAX_AMOUNT_CENTS = 100_000_000; // $1,000,000
 
 const VALID_SOURCES = new Set([
   'api',
@@ -17,6 +18,18 @@ const VALID_SOURCES = new Set([
 
 const METADATA_MAX_KEYS = 50;
 const METADATA_MAX_CHARS = 500;
+
+function assertAmountCents(amountCents: number): void {
+  if (!Number.isInteger(amountCents)) {
+    throw new ValidationError('amountCents must be an integer (cents, e.g. 1990 for $19.90)');
+  }
+  if (amountCents <= 0) {
+    throw new ValidationError('amountCents must be greater than 0');
+  }
+  if (amountCents > MAX_AMOUNT_CENTS) {
+    throw new ValidationError(`amountCents exceeds the per-session limit (${MAX_AMOUNT_CENTS})`);
+  }
+}
 
 function assertMetadata(metadata: Metadata): void {
   const keys = Object.keys(metadata);
@@ -56,19 +69,9 @@ export class SessionResource {
     private readonly defaultRetry?: RetryOptions
   ) {}
 
-  /**
-   * Creates a new payment session.
-   *
-   * `amount` must be a positive float in dollars (e.g. `19.90`). Zero,
-   * negative, non-finite, and values above $1,000,000 get a `ValidationError`
-   * before any network call.
-   *
-   * If `idempotencyKey` is omitted, the SDK generates a UUIDv7 so that
-   * naive retry loops never create duplicate sessions.
-   */
   async create(params: CreateSessionRequest): Promise<PaymentSession> {
     const {
-      amount,
+      amountCents,
       currency = 'AUD',
       platformOrderId,
       merchantName,
@@ -80,7 +83,7 @@ export class SessionResource {
       retry,
     } = params;
 
-    assertAmount(amount);
+    assertAmountCents(amountCents);
 
     if (currency !== 'AUD') {
       throw new ValidationError('Only AUD is supported');
@@ -117,7 +120,7 @@ export class SessionResource {
         body: JSON.stringify({
           merchantId: this.merchantId,
           platformOrderId,
-          amount: Math.round(amount * 100) / 100,
+          amountCents,
           currency,
           payId,
           merchantName,

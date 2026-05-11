@@ -10,31 +10,20 @@ export type Metadata = Record<string, string>;
 /**
  * Payment session creation request.
  *
- * `amount` is a positive float in dollars (e.g. `19.90` for $19.90).
- * Zero, negative, non-finite, and values above $1,000,000 are rejected
+ * `amountCents` is a positive integer in cents (e.g. `1990` for $19.90).
+ * Zero, negative, and values above 100,000,000 (=$1M) are rejected
  * with `ValidationError` before any network call.
  */
 export interface CreateSessionRequest {
-  amount: number;
+  amountCents: number;
   platformOrderId: string;
   payId: string;
   merchantName: string;
   reference?: string;
   source?: string;
   currency?: string;
-  /**
-   * Caller-supplied idempotency key. Replaying the same key within 24 hours
-   * returns the existing session unchanged. Defaults to a UUIDv7 generated
-   * by the SDK.
-   */
   idempotencyKey?: string;
-  /**
-   * Free-form key/value bag echoed back in the webhook payload.
-   * Max 50 keys, max 500 chars per key + value. Validated client-side
-   * before any network call.
-   */
   metadata?: Metadata;
-  /** Per-request retry override. */
   retry?: RetryOptions;
 }
 
@@ -44,7 +33,9 @@ export interface PaymentSession {
   payUrl: string;
   qrUrl: string;
   payId: string;
-  /** Float dollars, e.g. 19.90. */
+  /** Integer cents, e.g. 1990 for $19.90. */
+  amountCents: number;
+  /** @deprecated Use amountCents. Float dollars kept for backwards compat. */
   amount: number;
   currency: string;
   reference: string;
@@ -52,10 +43,27 @@ export interface PaymentSession {
   ui_state: string;
   expiresAt: string;
   merchantName?: string;
-  /** Echoed back from the request — useful for log correlation. */
   idempotencyKey?: string;
-  /** Echoed back unchanged from `createSession`. */
   metadata?: Metadata;
+}
+
+export interface CreateRefundRequest {
+  paymentSessionId: string;
+  amountCents: number;
+  reason?: string;
+  idempotencyKey?: string;
+  retry?: RetryOptions;
+}
+
+export interface Refund {
+  success: boolean;
+  refundId: string;
+  status: string;
+  amountCents: number;
+  originalInitiationId: string;
+  paymentSessionId: string;
+  idempotencyKey: string;
+  idempotent?: boolean;
 }
 
 export interface WebhookEvent {
