@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.1] - 2026-05-13
+
+### Added
+
+- `ScanAndPay` now accepts the Business app credential object shape:
+  `{ merchantId, apiBaseUrl, apiSecret, webhookSecret }`.
+
+### Documentation
+
+- README quickstart now lists the exact Integration credentials:
+  Merchant ID, API Base URL, API Secret, Webhook Secret.
+
 All notable changes to `@scanandpay/node` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
 and this package adheres to [SemVer](https://semver.org/spec/v2.0.0.html)

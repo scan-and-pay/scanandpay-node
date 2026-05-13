@@ -33,11 +33,12 @@ yarn add @scanandpay/node
 ```typescript
 import { ScanAndPay } from '@scanandpay/node';
 
-const client = new ScanAndPay(
-  process.env.SCANANDPAY_MERCHANT_ID!,
-  process.env.SCANANDPAY_API_SECRET!,
-  process.env.SCANANDPAY_WEBHOOK_SECRET, // optional
-);
+const client = new ScanAndPay({
+  merchantId: process.env.SCANANDPAY_MERCHANT_ID!,
+  apiBaseUrl: process.env.SCANANDPAY_API_BASE_URL!,
+  apiSecret: process.env.SCANANDPAY_API_SECRET!,
+  webhookSecret: process.env.SCANANDPAY_WEBHOOK_SECRET, // optional
+});
 
 // 1. Create a session at checkout. Amount is float dollars.
 const session = await client.createSession({
@@ -190,6 +191,7 @@ Sign in to the merchant dashboard at
 **Settings → Integrations**, and copy:
 
 - `Merchant ID`
+- `API Base URL`
 - `API Secret`
 - `Webhook Secret`
 

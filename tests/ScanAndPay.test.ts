@@ -31,4 +31,15 @@ describe('ScanAndPay', () => {
     const client = new ScanAndPay('m', 's', undefined, { baseUrl: 'https://api.example.dev' });
     expect(client).toBeDefined();
   });
+
+  it('accepts the Business app credential object shape', () => {
+    const client = new ScanAndPay({
+      merchantId: 'm',
+      apiBaseUrl: 'https://api.example.dev',
+      apiSecret: 's',
+      webhookSecret: 'wh_secret',
+    });
+    expect(client.sessions).toBeDefined();
+    expect(client.webhooks).toBeDefined();
+  });
 });

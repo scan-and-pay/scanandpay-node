@@ -10,22 +10,54 @@ export interface ScanAndPayOptions {
   retry?: RetryOptions;
 }
 
+export interface ScanAndPayCredentials extends ScanAndPayOptions {
+  merchantId: string;
+  apiBaseUrl?: string;
+  apiSecret: string;
+  webhookSecret?: string;
+}
+
 export class ScanAndPay {
   public static readonly DEFAULT_BASE_URL = 'https://api.scanandpay.com.au';
   public readonly sessions: SessionResource;
   public readonly refunds: RefundResource;
   private _webhooks?: WebhookVerifier;
+  private readonly merchantId: string;
+  private readonly apiSecret: string;
+  private readonly webhookSecret?: string;
   private readonly baseUrl: string;
 
+  constructor(credentials: ScanAndPayCredentials);
+  constructor(merchantId: string, apiSecret: string, webhookSecret?: string, options?: ScanAndPayOptions);
   constructor(
-    private readonly merchantId: string,
-    private readonly apiSecret: string,
-    private readonly webhookSecret?: string,
-    options: ScanAndPayOptions = {}
+    merchantIdOrCredentials: string | ScanAndPayCredentials,
+    apiSecretArg?: string,
+    webhookSecretArg?: string,
+    optionsArg: ScanAndPayOptions = {}
   ) {
+    const credentials = typeof merchantIdOrCredentials === 'object'
+      ? merchantIdOrCredentials
+      : {
+          merchantId: merchantIdOrCredentials,
+          apiSecret: apiSecretArg ?? '',
+          webhookSecret: webhookSecretArg,
+          ...optionsArg,
+        };
+
+    const merchantId = credentials.merchantId;
+    const apiSecret = credentials.apiSecret;
+    const webhookSecret = credentials.webhookSecret;
+    const options = {
+      ...credentials,
+      baseUrl: credentials.baseUrl ?? credentials.apiBaseUrl,
+    };
+
     if (!merchantId) throw new ValidationError('merchantId is required');
     if (!apiSecret) throw new ValidationError('apiSecret is required');
 
+    this.merchantId = merchantId;
+    this.apiSecret = apiSecret;
+    this.webhookSecret = webhookSecret;
     this.baseUrl = options.baseUrl ?? ScanAndPay.DEFAULT_BASE_URL;
     this.sessions = new SessionResource(this.merchantId, this.baseUrl, this.apiSecret, options.retry);
     this.refunds = new RefundResource(this.merchantId, this.baseUrl, this.apiSecret, options.retry);
